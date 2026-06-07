@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programmable Instrumentation — LabVIEW · UPV 2023/2024</title>
+
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; font-size:16px; }
+
+body {
+  background: #fff;
+  color: #111;
+  font-family: 'Times New Roman', Times, serif;
+  line-height: 1.8;
+}
+
+/* ─── NAV ──────────────────────────────────────────────── */
+nav {
+  position: sticky; top:0; z-index:200;
+  background: #fff;
+  border-bottom: 2px solid #c8102e;
+  display: flex; align-items:center; justify-content:space-between;
+  padding: 0.75rem 2.5rem;
+  gap: 1rem;
+}
+.nav-brand {
+  display: flex; align-items:center; gap:0.9rem; flex-shrink:0;
+}
+.nav-brand img { height:36px; width:auto; }
+.nav-title {
+  font-size: 0.88rem;
+  color: #c8102e;
+  font-style: italic;
+  line-height: 1.3;
+}
+.nav-links {
+  display: flex; gap:1.6rem; list-style:none; flex-wrap:wrap;
+}
+.nav-links a {
+  font-size: 0.85rem;
+  color: #444;
+  text-decoration: none;
+  font-family: 'Times New Roman', Times, serif;
+  transition: color .2s;
+}
+.nav-links a:hover { color:#c8102e; text-decoration:underline; }
+
+/* ─── HERO ─────────────────────────────────────────────── */
+.hero {
+  max-width: 860px; margin:0 auto;
+  padding: 4rem 2.5rem 3rem;
+  border-bottom: 1px solid #ccc;
+}
+.hero-kicker {
+  font-size:0.75rem; letter-spacing:.12em; text-transform:uppercase;
+  color:#888; margin-bottom:0.8rem;
+}
+.hero h1 {
+  font-size: clamp(1.9rem, 4vw, 3rem);
+  font-weight: bold; line-height:1.15;
+  color: #c8102e; margin-bottom:1rem;
+}
+.hero-sub {
+  font-size:1rem; color:#444; max-width:640px;
+  font-style:italic; margin-bottom:2rem;
+}
+.hero-meta {
+  display:flex; flex-wrap:wrap; gap:1.5rem 3rem;
+  padding-top:1.5rem; border-top:1px solid #ddd;
+}
+.meta-item { display:flex; flex-direction:column; gap:.1rem; }
+.meta-label {
+  font-size:0.68rem; text-transform:uppercase;
+  letter-spacing:.1em; color:#888;
+}
+.meta-value { font-size:0.93rem; }
+
+/* ─── MAIN LAYOUT ──────────────────────────────────────── */
+main { max-width:860px; margin:0 auto; }
+
+/* ─── SECTION ──────────────────────────────────────────── */
+section {
+  padding: 3.5rem 2.5rem;
+  border-bottom: 1px solid #ddd;
+}
+.section-kicker {
+  font-size:0.7rem; letter-spacing:.15em; text-transform:uppercase;
+  color:#888; margin-bottom:.35rem;
+}
+section > h2 {
+  font-size: clamp(1.35rem, 2.5vw, 1.8rem);
+  font-weight:bold; color:#c8102e;
+  padding-bottom:.5rem; border-bottom:1px solid #ddd;
+  margin-bottom:2.5rem;
+}
+
+/* ─── OVERVIEW GRID ────────────────────────────────────── */
+.overview-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px,1fr));
+  gap:1px; background:#ddd;
+  border:1px solid #ddd;
+}
+.ov-card {
+  background:#fff; padding:1.5rem 1.4rem;
+}
+.ov-num {
+  font-size:0.68rem; color:#888; margin-bottom:.6rem;
+  display:flex; align-items:center; gap:.4rem;
+  font-family: 'Courier New', monospace;
+}
+.dot { display:inline-block; width:7px; height:7px; border-radius:50%; }
+.dot-gen   { background:#c8102e; }
+.dot-gpib  { background:#1a4f8a; }
+.dot-osc   { background:#2a7a2a; }
+.dot-lxi   { background:#7a3a9a; }
+.dot-frac  { background:#e06000; }
+
+.ov-card h3 { font-size:1rem; font-weight:bold; margin-bottom:.4rem; }
+.ov-card p  { font-size:.84rem; color:#555; line-height:1.65; }
+.ov-tags {
+  display:flex; flex-wrap:wrap; gap:.3rem; margin-top:.9rem;
+}
+.ov-tag {
+  font-size:.6rem; font-family:'Courier New',monospace;
+  letter-spacing:.05em; text-transform:uppercase;
+  padding:.15rem .45rem; border:1px solid #ccc; color:#666;
+}
+
+/* ─── PROB BLOCK ────────────────────────────────────────── */
+.prob {
+  margin-bottom:3.5rem; padding-bottom:3.5rem;
+  border-bottom:1px dashed #ddd;
+}
+.prob:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+
+.prob-header {
+  display:flex; align-items:flex-start; gap:1.2rem;
+  margin-bottom:1.4rem; flex-wrap:wrap;
+}
+.prob-num {
+  font-size:2.4rem; font-weight:bold; color:#ddd; line-height:1; flex-shrink:0;
+}
+.badge {
+  display:inline-block; font-size:.6rem; font-family:'Courier New',monospace;
+  letter-spacing:.12em; text-transform:uppercase;
+  padding:.2rem .55rem; border:1px solid; margin-bottom:.35rem;
+}
+.badge-gen   { color:#c8102e; border-color:#c8102e; background:#fff8f8; }
+.badge-gpib  { color:#1a4f8a; border-color:#1a4f8a; background:#f5f8ff; }
+.badge-osc   { color:#2a7a2a; border-color:#2a7a2a; background:#f5fff5; }
+.badge-lxi   { color:#7a3a9a; border-color:#7a3a9a; background:#f9f5ff; }
+.badge-frac  { color:#e06000; border-color:#e06000; background:#fff8f0; }
+
+.prob h3 { font-size:1.1rem; font-weight:bold; }
+
+/* ─── TWO-COL ──────────────────────────────────────────── */
+.two-col {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:2rem; align-items:start; margin-bottom:1.5rem;
+}
+@media(max-width:680px){
+  .two-col { grid-template-columns:1fr; }
+  nav { padding:.7rem 1.2rem; }
+  .hero, section { padding-left:1.2rem; padding-right:1.2rem; }
+}
+
+/* ─── SKILL TABLE ───────────────────────────────────────── */
+.skill-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin:1rem 0;
+}
+.skill-item { padding:.6rem .8rem; border:1px solid #e8e8e8; background:#fafafa; }
+.skill-name { font-size:.8rem; font-weight:bold; margin-bottom:.3rem; }
+.skill-bar-wrap { background:#e8e8e8; height:5px; border-radius:2px; }
+.skill-bar { height:5px; border-radius:2px; background:#c8102e; }
+
+/* ─── EQ BOX ────────────────────────────────────────────── */
+.eq-box {
+  background:#fff8f8;
+  border-left:3px solid #c8102e;
+  padding:.9rem 1.1rem;
+  margin:.9rem 0;
+  overflow-x:auto;
+  font-size:.97rem;
+  font-family:'Courier New',monospace;
+}
+
+/* ─── IMAGES ─────────────────────────────────────────────── */
+.img-wrap { margin:.4rem 0; }
+.img-wrap img {
+  width:100%; display:block;
+  border:1px solid #ccc;
+}
+.img-cap {
+  font-size:.78rem; color:#666; font-style:italic;
+  text-align:center; margin-top:.35rem;
+}
+.img-grid-2 {
+  display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; margin:1.2rem 0;
+}
+.img-grid-1 { margin:1.2rem 0; }
+
+/* ─── TABLE ─────────────────────────────────────────────── */
+table { width:100%; border-collapse:collapse; font-size:.87rem; margin:.9rem 0; }
+th {
+  font-size:.68rem; letter-spacing:.07em; text-transform:uppercase;
+  color:#555; padding:.45rem .8rem;
+  border-bottom:2px solid #c8102e;
+  background:#fff8f8; text-align:left;
+}
+td {
+  padding:.4rem .8rem;
+  border-bottom:1px solid #e8e8e8;
+  color:#444;
+}
+td:first-child { font-family:'Courier New',monospace; font-size:.82rem; color:#111; }
+
+/* ─── REQUIREMENTS BOX ─────────────────────────────────── */
+.req-box {
+  border:1px solid #1a4f8a;
+  background:#f5f8ff;
+  padding:1.2rem 1.4rem;
+  margin:1.5rem 0;
+}
+.req-box h4 {
+  font-size:.78rem; letter-spacing:.1em; text-transform:uppercase;
+  color:#1a4f8a; margin-bottom:.8rem;
+}
+.req-list { list-style:none; }
+.req-list li {
+  font-size:.88rem; color:#333; padding:.25rem 0;
+  padding-left:1.2rem; position:relative;
+}
+.req-list li::before {
+  content:"✓"; position:absolute; left:0;
+  color:#c8102e; font-weight:bold;
+}
+
+/* ─── PDF ────────────────────────────────────────────────── */
+.pdf-wrap { border:1px solid #ccc; overflow:hidden; margin-top:1.5rem; }
+.pdf-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.5rem 1rem; background:#f5f5f5; border-bottom:1px solid #ccc;
+}
+.pdf-title { font-family:'Courier New',monospace; font-size:.7rem; color:#555; }
+.pdf-link {
+  font-size:.78rem; color:#c8102e; text-decoration:none;
+  border:1px solid #c8102e; padding:.2rem .55rem;
+}
+.pdf-link:hover { background:#fff0f0; }
+.pdf-frame { width:100%; height:640px; border:none; display:block; }
+
+/* ─── FOOTER ─────────────────────────────────────────────── */
+footer {
+  max-width:860px; margin:0 auto;
+  padding:2.2rem 2.5rem;
+  border-top:2px solid #c8102e;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:1rem;
+}
+.foot-left { font-size:.85rem; color:#555; font-style:italic; line-height:1.9; }
+.foot-right { display:flex; align-items:center; gap:1rem; }
+.foot-right img { height:40px; width:auto; }
+.foot-right a { font-size:.85rem; color:#c8102e; text-decoration:none; }
+.foot-right a:hover { text-decoration:underline; }
+
+/* ─── UTILITY ────────────────────────────────────────────── */
+.mt1 { margin-top:1rem; }
+.mt2 { margin-top:2rem; }
+.mt3 { margin-top:2.8rem; }
+p.body-text { font-size:.95rem; color:#333; margin-bottom:.8rem; line-height:1.85; }
+
+/* ─── JOB RELEVANCE BANNER ─────────────────────────────── */
+.job-banner {
+  background:#1a4f8a; color:#fff;
+  padding:1.1rem 1.4rem; margin:1.5rem 0;
+  border-left:4px solid #c8102e;
+}
+.job-banner h4 { font-size:.78rem; letter-spacing:.1em; text-transform:uppercase; margin-bottom:.4rem; opacity:.8; }
+.job-banner p  { font-size:.9rem; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <img src="upv.png"     alt="UPV logo">
+    <img src="erasmus.png" alt="Erasmus Mundus logo">
+    <span class="nav-title">Programmable Instrumentation — LabVIEW<br>UPV · WAVES / Master Ingeniería Acústica 2023/2024</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#p2">Practice 2</a></li>
+    <li><a href="#p3">Practice 3</a></li>
+    <li><a href="#p4">Practice 4</a></li>
+    <li><a href="#fractals">Fractals</a></li>
+    <li><a href="#skills">Skills</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-kicker">Programmable Instrumentation · Erasmus Mundus WAVES / Master Ingeniería Acústica</div>
+  <h1>LabVIEW Instrumentation &amp; Control</h1>
+  <p class="hero-sub">
+    Virtual instrument design, GPIB/LXI bus control, signal generation, waveform acquisition, AM modulation, oscilloscope automation, and fractal computation — implemented in National Instruments LabVIEW.
+  </p>
+  <div class="hero-meta">
+    <div class="meta-item">
+      <span class="meta-label">Authors</span>
+      <span class="meta-value">Shahariar Ryehan &nbsp;&middot;&nbsp; Marina</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Institution</span>
+      <span class="meta-value">Universitat Politècnica de València (UPV)</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Programme</span>
+      <span class="meta-value">Erasmus Mundus WAVES / Master Ingeniería Acústica</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Academic Year</span>
+      <span class="meta-value">2023 / 2024</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Platform</span>
+      <span class="meta-value">NI LabVIEW · GPIB (IEEE 488) · LXI</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Repository</span>
+      <span class="meta-value"><a href="https://github.com/sryehan/LABVIEW-Project-UPV" target="_blank" style="color:#c8102e;">github.com/sryehan ↗</a></span>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <div class="section-kicker">00 — Overview</div>
+  <h2>Projects Covered</h2>
+  <div class="overview-grid">
+    <div class="ov-card">
+      <div class="ov-num"><span class="dot dot-gen"></span>01 · Practice 2</div>
+      <h3>Function Generator</h3>
+      <p>Sine, square, triangle, sawtooth waveforms with noise, Nyquist enforcement, and duty-cycle control. Real-time display via Waveform Graph.</p>
+      <div class="ov-tags">
+        <span class="ov-tag">Signal Gen</span><span class="ov-tag">Nyquist</span><span class="ov-tag">While Loop</span>
+      </div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num"><span class="dot dot-osc"></span>02 · Practice 2</div>
+      <h3>Virtual Oscilloscope</h3>
+      <p>Configurable V/div, time/div, DC offset knobs with property nodes controlling X/Y scale. FFT and waveform measurements.</p>
+      <div class="ov-tags">
+        <span class="ov-tag">Property Nodes</span><span class="ov-tag">FFT</span><span class="ov-tag">Waveform</span>
+      </div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num"><span class="dot dot-gpib"></span>03 · Practice 3</div>
+      <h3>GPIB / HP 33120A Control</h3>
+      <p>SCPI command automation of an Agilent 33120A arbitrary function generator. AM modulation via IEEE 488.2 bus commands.</p>
+      <div class="ov-tags">
+        <span class="ov-tag">GPIB</span><span class="ov-tag">SCPI</span><span class="ov-tag">AM Modulation</span>
+      </div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num"><span class="dot dot-lxi"></span>04 · Practice 4</div>
+      <h3>LXI Oscilloscope (DS2102A)</h3>
+      <p>Full remote control of Rigol DS2102A via LXI/VISA. Waveform acquisition, TMC header parsing, and voltage reconstruction.</p>
+      <div class="ov-tags">
+        <span class="ov-tag">LXI</span><span class="ov-tag">VISA</span><span class="ov-tag">Waveform ACQ</span>
+      </div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-num"><span class="dot dot-frac"></span>05 · Bonus</div>
+      <h3>Mandelbrot Fractal</h3>
+      <p>Iterative complex-plane computation of the Mandelbrot set rendered as a high-resolution colour map in LabVIEW.</p>
+      <div class="ov-tags">
+        <span class="ov-tag">Fractal</span><span class="ov-tag">Complex Math</span><span class="ov-tag">Visualisation</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRACTICE 2 -->
+<section id="p2">
+  <div class="section-kicker">01 — Practice 2</div>
+  <h2>Function Generator &amp; Virtual Oscilloscope</h2>
+
+  <!-- P2.1 Function Generator -->
+  <div class="prob">
+    <div class="prob-header">
+      <div class="prob-num">01</div>
+      <div>
+        <div class="badge badge-gen">LabVIEW · Signal Generation</div>
+        <h3>generador.vi — Multi-Waveform Function Generator</h3>
+      </div>
+    </div>
+
+    <div class="job-banner">
+      <h4>Industry Relevance</h4>
+      <p>Virtual function generators are core to NVH test rigs, automated test equipment (ATE), and DAQ systems. This VI demonstrates the signal-generation capability expected in roles involving PUMA, dSPACE, or NI TestStand environments.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <p class="body-text">Designed a fully parametric signal generator VI with the following specifications:</p>
+        <table>
+          <tr><th>Parameter</th><th>Range</th><th>Increment</th></tr>
+          <tr><td>Waveform</td><td>Sine / Square / Triangle / Sawtooth</td><td>—</td></tr>
+          <tr><td>Frequency</td><td>100 Hz – 10 kHz</td><td>10 Hz</td></tr>
+          <tr><td>Amplitude</td><td>100 mV – 10 V</td><td>0.1 V</td></tr>
+          <tr><td>Offset</td><td>0 – 5 V</td><td>0.1 V</td></tr>
+          <tr><td>Phase</td><td>0 – 360°</td><td>5°</td></tr>
+          <tr><td>Noise</td><td>0 – 1 V</td><td>0.1 V</td></tr>
+          <tr><td>Duty Cycle</td><td>5 – 95 %</td><td>5 %</td></tr>
+        </table>
+        <p class="body-text mt1">Nyquist criterion enforced: if the user-set frequency exceeds F<sub>s</sub>/2, the VI automatically corrects the sampling rate and displays the updated value. Cycle counter tracks how many complete signal periods have been generated.</p>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="image_1.jpg" alt="generador.vi — Front Panel and Block Diagram">
+          <div class="img-cap">Fig. 1 — generador.vi: Block Diagram (left) and Front Panel (right)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- P2.2 Oscilloscope -->
+  <div class="prob">
+    <div class="prob-header">
+      <div class="prob-num">02</div>
+      <div>
+        <div class="badge badge-osc">LabVIEW · Measurement</div>
+        <h3>osciloscopio.vi — Virtual Oscilloscope with Property Nodes</h3>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <p class="body-text">A software oscilloscope receiving the generator's waveform output. X-scale and Y-scale are driven by LabVIEW <strong>Property Nodes</strong> so the display grid matches real hardware knob settings precisely.</p>
+        <div class="eq-box">
+Y_max = VDC + V_div × 4
+Y_min = VDC − V_div × 4
+X_max = Time_div × 10
+        </div>
+        <p class="body-text">Waveform measurements implemented: V<sub>max</sub>, V<sub>min</sub>, V<sub>DC</sub>, V<sub>RMS</sub>, FFT spectrum (magnitude &amp; phase), and amplitude histogram with configurable bin count.</p>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="image_5.png" alt="osciloscopio.vi Front Panel">
+          <div class="img-cap">Fig. 2 — osciloscopio.vi: Front Panel with waveform graph</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="img-grid-1 mt2">
+      <div class="img-wrap">
+        <img src="image_3.png" alt="Oscilloscope with FFT and Histogram">
+        <div class="img-cap">Fig. 3 — medidas.vi: FFT spectrum, amplitude histogram, and signal statistics</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRACTICE 3 -->
+<section id="p3">
+  <div class="section-kicker">02 — Practice 3</div>
+  <h2>GPIB Bus Control — HP 33120A Arbitrary Function Generator</h2>
+
+  <div class="prob">
+    <div class="prob-header">
+      <div class="prob-num">03</div>
+      <div>
+        <div class="badge badge-gpib">IEEE 488 · SCPI · GPIB</div>
+        <h3>ondaBasica.vi + AM.vi — Remote Instrument Control via GPIB</h3>
+      </div>
+    </div>
+
+    <div class="job-banner">
+      <h4>Industry Relevance</h4>
+      <p>GPIB/SCPI control is the standard for bench instruments in automotive NVH test rigs (PUMA, CANape) and aerospace ATE. This work directly demonstrates the programming background required for Test Rig Engineer roles targeting instruments like the HP33120A, Tektronix TDS210, and Rigol DS series.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <p class="body-text">Automated the HP 33120A arbitrary function generator over the GPIB bus (IEEE 488.2 / SCPI). The VI builds instrument command strings programmatically and sends them via <code>GPIB Write</code>.</p>
+        <p class="body-text">Key SCPI commands implemented:</p>
+        <div class="eq-box">
+APPLy:SINusoid &lt;freq&gt;,&lt;amp&gt;,&lt;offset&gt;
+APPLy:SQUare &lt;freq&gt;,&lt;amp&gt;,&lt;offset&gt;
+PULSe:DCYCle &lt;percent&gt;
+FUNCtion:USER SINC | CARDIAC | NEG_RAMP
+AM:INTernal:FUNCtion SINusoid
+AM:INTernal:FREQuency &lt;freq&gt;
+AM:DEPTh &lt;depth%&gt;
+AM:STATe ON
+        </div>
+        <p class="body-text">Decimal separator issue handled: IEEE 488.2 requires point notation regardless of OS locale — enforced via <code>Format Into String</code> with explicit dot format.</p>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="image_2.png" alt="AM.vi — GPIB AM Modulation">
+          <div class="img-cap">Fig. 4 — AM.vi: GPIB AM modulation block diagram and front panel</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt2">
+      <table>
+        <tr><th>SubVI</th><th>Function</th><th>Bus</th></tr>
+        <tr><td>scanner.vi</td><td>Scan all GPIB addresses using FindLstn + *IDN?</td><td>GPIB IEEE 488.2</td></tr>
+        <tr><td>ondaBasica.vi</td><td>Parametric waveform output (freq, amp, offset, shape)</td><td>GPIB SCPI</td></tr>
+        <tr><td>AM.vi</td><td>AM modulation: carrier + modulator config + enable</td><td>GPIB SCPI</td></tr>
+        <tr><td>ADRESS LIST.vi</td><td>Device discovery and identification via VISA</td><td>GPIB / VISA</td></tr>
+      </table>
+    </div>
+
+    <div class="mt3">
+      <h3>Full Practice Report</h3>
+      <div class="pdf-wrap">
+        <div class="pdf-head">
+          <span class="pdf-title">Practice 3 — GPIB Instruments Control (HP33120A).pdf</span>
+          <a href="Práctica_3.pdf" target="_blank" class="pdf-link">Open in new tab ↗</a>
+        </div>
+        <iframe class="pdf-frame"
+          src="https://docs.google.com/gview?url=https://sryehan.github.io/LABVIEW-Project-UPV/Practice%203%20-%20LabView.pdf&embedded=true"
+          title="Practice 3 PDF">
+        </iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRACTICE 4 -->
+<section id="p4">
+  <div class="section-kicker">03 — Practice 4</div>
+  <h2>LXI Bus Control — Rigol DS2102A Digital Oscilloscope</h2>
+
+  <div class="prob">
+    <div class="prob-header">
+      <div class="prob-num">04</div>
+      <div>
+        <div class="badge badge-lxi">LXI · VISA · Waveform Acquisition</div>
+        <h3>Complete Oscilloscope Remote Control via LXI/VISA</h3>
+      </div>
+    </div>
+
+    <div class="job-banner">
+      <h4>Industry Relevance</h4>
+      <p>LXI-based waveform acquisition is the modern replacement for GPIB in NVH and powertrain test systems. Competency in VISA, TMC header parsing, and real-time waveform reconstruction is directly applicable to DS2102A, Tektronix, and Keysight bench instruments.</p>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <p class="body-text">Implemented full remote control of the Rigol DS2102A (100 MHz, 2 ch, 2 GSa/s) over the LXI (LAN eXtensions for Instrumentation) bus using VISA write/read calls.</p>
+        <p class="body-text">Waveform reconstruction from raw BYTE data:</p>
+        <div class="eq-box">
+YVOLTS = (YBYTE − YOR − YREF) × YINC
+YINC = VerticalScale / 25    [NORMAL mode]
+YREF = 127
+XINC = TimeScale / 50
+        </div>
+        <p class="body-text">TMC header <code>#NXXXXXX</code> parsed to extract waveform length before converting the byte array to voltage using <code>String To Byte Array</code> + <code>Array Subset</code>.</p>
+      </div>
+      <div>
+        <div class="req-box">
+          <h4>SubVI Architecture</h4>
+          <ul class="req-list">
+            <li>Horizontal Channel control.vi — :TIM:SCAL, :TIM:OFFS</li>
+            <li>Vertical Channel control.vi — :CHAN:SCAL, :OFFS, :COUP</li>
+            <li>Trigger configuration.vi — :TRIG:EDGE:LEV, :SOUR</li>
+            <li>Waveform reader.vi — :WAV:DATA? + TMC decode</li>
+            <li>Convert to volt.vi — YVOLTS equation + Build Waveform</li>
+            <li>Final Practice 4_2.vi — Main: config Event loop + 1s Timed Loop</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt2">
+      <table>
+        <tr><th>SCPI Command</th><th>Purpose</th></tr>
+        <tr><td>:CHAN1:SCAL 1.000</td><td>Vertical scale 1 V/div</td></tr>
+        <tr><td>:CHAN1:COUP DC</td><td>DC coupling</td></tr>
+        <tr><td>:TIM:SCAL 5e-4</td><td>Timebase 500 µs/div</td></tr>
+        <tr><td>:TRIG:EDGE:LEV 1.0</td><td>Trigger level 1 V</td></tr>
+        <tr><td>:WAV:SOUR CHAN1; :WAV:FORM BYTE; :WAV:DATA?</td><td>Acquire waveform in BYTE format</td></tr>
+        <tr><td>:WAV:YOR?; :WAV:YREF?; :CHAN1:SCAL?</td><td>Query scaling parameters</td></tr>
+      </table>
+    </div>
+
+    <div class="mt3">
+      <h3>Full Practice Report</h3>
+      <div class="pdf-wrap">
+        <div class="pdf-head">
+          <span class="pdf-title">Practice 4 — LXI Oscilloscope Control (DS2102A).pdf</span>
+          <a href="Práctica_4.pdf" target="_blank" class="pdf-link">Open in new tab ↗</a>
+        </div>
+        <iframe class="pdf-frame"
+          src="https://docs.google.com/gview?url=https://sryehan.github.io/LABVIEW-Project-UPV/Practice%204%20-%20LabView.pdf&embedded=true"
+          title="Practice 4 PDF">
+        </iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FRACTALS -->
+<section id="fractals">
+  <div class="section-kicker">04 — Bonus Project</div>
+  <h2>Mandelbrot Fractal Computation in LabVIEW</h2>
+
+  <div class="prob">
+    <div class="prob-header">
+      <div class="prob-num">05</div>
+      <div>
+        <div class="badge badge-frac">Complex Math · Visualisation</div>
+        <h3>Fractal.vi — Iterative Mandelbrot Set Renderer</h3>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <p class="body-text">Implemented the Mandelbrot set in LabVIEW by iterating the complex recurrence:</p>
+        <div class="eq-box">
+z_{n+1} = z_n² + c,   c ∈ ℂ
+Render: count iterations until |z| > 2
+        </div>
+        <p class="body-text">Each point in the complex plane is coloured by its escape-time count, producing the characteristic fractal boundary. The implementation demonstrates LabVIEW's capability for numerical computing beyond instrumentation — directly applicable to DSP, acoustic simulation, and signal analysis pipelines.</p>
+        <p class="body-text">This project was presented as evidence of algorithmic programming depth alongside the instrumentation work.</p>
+      </div>
+      <div>
+        <div class="img-wrap">
+          <img src="image_4.png" alt="Mandelbrot Fractal rendered in LabVIEW">
+          <div class="img-cap">Fig. 5 — Mandelbrot set rendered in LabVIEW (Fractal.vi)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="section-kicker">05 — Technical Profile</div>
+  <h2>Skills &amp; Competencies</h2>
+
+  <p class="body-text">Competencies demonstrated across all practices and directly relevant to NVH/ATE test engineering roles requiring LabVIEW proficiency:</p>
+
+  <div class="skill-grid">
+    <div class="skill-item">
+      <div class="skill-name">LabVIEW — VI Design</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="width:95%"></div></div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">GPIB / IEEE 488 / SCPI</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="width:90%"></div></div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">LXI / VISA Bus Control</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="width:88%"></div></div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">Signal Processing &amp; FFT</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="width:85%"></div></div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">Waveform Measurement (DAQ)</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="width:87%"></div></div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">AM Modulation Design</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="width:82%"></div></div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">Structural Dynamics / NVH (theory)</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="width:80%"></div></div>
+    </div>
+    <div class="skill-item">
+      <div class="skill-name">MATLAB · Computational Acoustics</div>
+      <div class="skill-bar-wrap"><div class="skill-bar" style="width:90%"></div></div>
+    </div>
+  </div>
+
+  <div class="req-box mt2">
+    <h4>Matching Job Requirements — NVH Test Rig Engineer (Stellantis e-Transmissions)</h4>
+    <ul class="req-list">
+      <li>LabVIEW experience demonstrated across 3 full practices and bonus project</li>
+      <li>Programming background in SCPI command building, string ops, numeric conversion</li>
+      <li>DAQ / data acquisition: GPIB + LXI waveform reading, FFT, histogram, RMS</li>
+      <li>Instrument control (function generator + oscilloscope) — same as PUMA/CANape workflow</li>
+      <li>Knowledge of sensors, signal conditioning, and measurement theory (Nyquist, CFL)</li>
+      <li>Control theory awareness via Erasmus Mundus acoustics curriculum</li>
+      <li>Structured, modular VI design: subVI hierarchy, event structures, timed loops</li>
+      <li>English fluency — all documentation and reporting in English</li>
+    </ul>
+  </div>
+</section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-left">
+    <em>Shahariar Ryehan</em><br>
+    <em>Marina</em><br>
+    Erasmus Mundus WAVES / Master Ingeniería Acústica &middot; Universitat Politècnica de València &middot; 2023–2024
+  </div>
+  <div class="foot-right">
+    <img src="upv.png"     alt="UPV logo">
+    <img src="erasmus.png" alt="Erasmus Mundus logo">
+    <a href="https://github.com/sryehan/LABVIEW-Project-UPV" target="_blank">github.com/sryehan ↗</a>
+  </div>
+</footer>
+
+</body>
+</html>
